@@ -99,10 +99,44 @@
   lb.addEventListener("touchend", function (e) { if (tx === null) return; var dx = e.changedTouches[0].clientX - tx; if (Math.abs(dx) > 40) showLb(gi + (dx < 0 ? 1 : -1)); tx = null; });
 
   document.addEventListener("keydown", function (e) {
-    if (e.key === "Escape") { if (!modal.hidden) closeVideo(); if (!lb.hidden) closeLb(); if (menu.classList.contains("open")) setMenu(false); }
+    if (e.key === "Escape") { if (!bioModal.hidden) closeBio(); if (!modal.hidden) closeVideo(); if (!lb.hidden) closeLb(); if (menu.classList.contains("open")) setMenu(false); }
+    if (!bioModal.hidden && e.key === "ArrowRight") fillBio(bioIdx + 1);
+    if (!bioModal.hidden && e.key === "ArrowLeft") fillBio(bioIdx - 1);
     if (!lb.hidden && e.key === "ArrowRight") showLb(gi + 1);
     if (!lb.hidden && e.key === "ArrowLeft") showLb(gi - 1);
   });
+
+  /* ---------- band bios ---------- */
+  var bioModal = $("#bioModal"), bioPanel = $("#bioPanel"), bioIdx = 0, bioOpener = null;
+  var members = $$(".member");
+  function fillBio(i) {
+    bioIdx = (i + members.length) % members.length;
+    var mem = members[bioIdx], img = $("img", mem);
+    var bi = $("#bioImg");
+    bi.src = img.getAttribute("src"); bi.alt = img.alt;
+    bi.style.setProperty("--pos", img.style.getPropertyValue("--pos") || "50% 25%");
+    $("#bioName").textContent = $(".member-cap strong", mem).textContent;
+    $("#bioRole").textContent = $(".member-cap span", mem).textContent;
+    $("#bioCopy").innerHTML = $(".bio-text", mem).innerHTML;
+    $("#bioCopy").scrollTop = 0;
+  }
+  function openBio(i) {
+    bioOpener = document.activeElement;
+    fillBio(i);
+    bioModal.hidden = false; document.body.classList.add("locked");
+    requestAnimationFrame(function () { requestAnimationFrame(function () { bioModal.classList.add("show"); }); });
+    $("#bioClose").focus();
+  }
+  function closeBio() {
+    bioModal.classList.remove("show");
+    setTimeout(function () { bioModal.hidden = true; document.body.classList.remove("locked"); }, reduce ? 0 : 380);
+    if (bioOpener) bioOpener.focus();
+  }
+  members.forEach(function (mem, i) { $(".member-open", mem).addEventListener("click", function () { openBio(i); }); });
+  $("#bioClose").addEventListener("click", closeBio);
+  $("#bioPrev").addEventListener("click", function () { fillBio(bioIdx - 1); });
+  $("#bioNext").addEventListener("click", function () { fillBio(bioIdx + 1); });
+  bioModal.addEventListener("click", function (e) { if (e.target === bioModal) closeBio(); });
 
   /* ---------- shows ---------- */
   var today = new Date(); today.setHours(0, 0, 0, 0);
@@ -176,6 +210,6 @@
   $("#yr").textContent = new Date().getFullYear();
   if ("IntersectionObserver" in window && !reduce) {
     var io = new IntersectionObserver(function (es) { es.forEach(function (en) { if (en.isIntersecting) { en.target.classList.add("in"); io.unobserve(en.target); } }); }, { rootMargin: "0px 0px -8% 0px" });
-    $$(".section .wrap > *, .proof-grid > div, .member, .kit-card").forEach(function (el) { el.classList.add("reveal"); io.observe(el); });
+    $$(".section .wrap > *, .quote-inner, .proof-grid > div, .member, .kit-card").forEach(function (el) { el.classList.add("reveal"); io.observe(el); });
   }
 })();
